@@ -25,10 +25,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in {
         formatter = pkgs.alejandra;
-        packages.do-image =
-          if system == "x86_64-linux"
-          then nixosConfigurations.do.config.system.build.digitalOceanImage
-          else pkgs.lib.throw "do-image is only available on x86_64-linux";
+        packages.do-image = nixosConfigurations.do.config.system.build.digitalOceanImage;
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
