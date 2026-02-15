@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euxo pipefail
           nix --version
-          nix build -L --accept-flake-config ".#do-image"
+          nix build -L --accept-flake-config --option system-features "" ".#do-image"
           echo "Build output:"
           ls -lah result
 
