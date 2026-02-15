@@ -41,7 +41,7 @@ jobs:
       - name: Locate image file
         id: out
         run: |
-          IMG=$(find result -type f -name '*.qcow2*' -print -quit)
+          IMG=$(find -L result -type f -name '*.qcow2*' -print -quit)
           test -f "$IMG"
           echo "image_path=$IMG" >> "$GITHUB_OUTPUT"
 
