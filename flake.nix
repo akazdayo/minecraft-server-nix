@@ -1,4 +1,5 @@
 {
+  description = "Minecraft server deployment with NixOS, Terraform, and deploy-rs";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -27,35 +28,23 @@
         system = "x86_64-linux";
         modules = [
           "${nixpkgs}/nixos/modules/virtualisation/digital-ocean-image.nix"
-          ./do-image.nix
+          ./terraform/do-image.nix
         ];
       };
 
       # Droplet用 NixOS Configuration
-      droplet = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          "${nixpkgs}/nixos/modules/virtualisation/digital-ocean-config.nix"
-          ./droplet-configuration.nix
-        ];
-      };
+      droplet = (import ./deploy/nixos-configurations.nix {inherit self nixpkgs;}).droplet;
     };
   in
     {
       inherit nixosConfigurations;
 
-      # --- Deploy-RS ---
-      deploy.nodes.droplet = {
-        hostname = "HOST IP ADDRESS"; # IPアドレスをterraformのoutputに置き換えしてください
-        sshUser = "root";
-        profiles.system = {
-          user = "root";
-          path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.droplet;
-        };
-      };
+      modules.dropletConfiguration = ./deploy/droplet-configuration.nix;
 
-      # Deploy-RS validation checks
-      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+      # --- Deploy-RS ---
+      deploy = import ./deploy/deployment.nix {
+        inherit deploy-rs self;
+      };
     }
     // flake-utils.lib.eachDefaultSystem (
       system: let
@@ -63,7 +52,7 @@
         terraform = pkgs.opentofu;
         terraformConfiguration = terranix.lib.terranixConfiguration {
           inherit system;
-          modules = [./terraform.nix];
+          modules = [./terraform/terraform.nix];
         };
       in {
         formatter = pkgs.alejandra;
@@ -86,6 +75,9 @@
                 && ${terraform}/bin/tofu apply
             ''
           );
+          meta = {
+            description = "Apply Terraform/OpenTofu configuration";
+          };
         };
 
         # nix run .#tf-destroy
@@ -99,6 +91,9 @@
                 && ${terraform}/bin/tofu destroy
             ''
           );
+          meta = {
+            description = "Destroy Terraform/OpenTofu resources";
+          };
         };
 
         # nix run .#tf-plan
@@ -112,12 +107,28 @@
                 && ${terraform}/bin/tofu plan
             ''
           );
+          meta = {
+            description = "Plan Terraform/OpenTofu changes";
+          };
+        };
+
+        apps.deploy = {
+          type = "app";
+          program = toString (
+            pkgs.writers.writeBash "deploy" ''
+              deploy -- --log-format internal-json -v |& nom --json
+            ''
+          );
+          meta = {
+            description = "Deploy NixOS configurations using deploy-rs";
+          };
         };
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             opentofu
             deploy-rs.packages.${system}.default
+            nix-output-monitor
           ];
         };
       }
