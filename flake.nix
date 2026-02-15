@@ -12,37 +12,35 @@
     };
   };
 
-  outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      flake-utils,
-      terranix,
-      deploy-rs,
-      ...
-    }:
-    let
-      # --- NixOS Configurations ---
-      nixosConfigurations = {
-        # DigitalOcean image build用
-        do = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            "${nixpkgs}/nixos/modules/virtualisation/digital-ocean-image.nix"
-            ./do-image.nix
-          ];
-        };
-
-        # Droplet用 NixOS Configuration
-        droplet = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            "${nixpkgs}/nixos/modules/virtualisation/digital-ocean-config.nix"
-            ./droplet-configuration.nix
-          ];
-        };
+  outputs = inputs @ {
+    self,
+    nixpkgs,
+    flake-utils,
+    terranix,
+    deploy-rs,
+    ...
+  }: let
+    # --- NixOS Configurations ---
+    nixosConfigurations = {
+      # DigitalOcean image build用
+      do = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          "${nixpkgs}/nixos/modules/virtualisation/digital-ocean-image.nix"
+          ./do-image.nix
+        ];
       };
-    in
+
+      # Droplet用 NixOS Configuration
+      droplet = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          "${nixpkgs}/nixos/modules/virtualisation/digital-ocean-config.nix"
+          ./droplet-configuration.nix
+        ];
+      };
+    };
+  in
     {
       inherit nixosConfigurations;
 
@@ -60,16 +58,14 @@
       checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
     }
     // flake-utils.lib.eachDefaultSystem (
-      system:
-      let
+      system: let
         pkgs = nixpkgs.legacyPackages.${system};
         terraform = pkgs.opentofu;
         terraformConfiguration = terranix.lib.terranixConfiguration {
           inherit system;
-          modules = [ ./terraform.nix ];
+          modules = [./terraform.nix];
         };
-      in
-      {
+      in {
         formatter = pkgs.alejandra;
 
         # DigitalOcean image build (既存)

@@ -1,10 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-{
+{pkgs, ...}: {
   # Nix
   nix.settings.experimental-features = [
     "nix-command"
@@ -13,7 +7,7 @@
 
   # Networking
   networking.hostName = "minecraft-server";
-  networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.allowedTCPPorts = [22];
 
   # SSH
   services.openssh = {
