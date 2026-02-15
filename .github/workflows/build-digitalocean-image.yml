@@ -36,25 +36,12 @@ jobs:
           use-flakehub: false
 
       - name: Build DigitalOcean image
-        env:
-          HOST: ${{ inputs.host || 'do' }}
-        run: |
-          set -euxo pipefail
-          nix --version
-          nix build -L --option system-features "" ".#do-image"
-          ls -lah result
+        run: nix build -L --option system-features "" ".#do-image"
 
       - name: Locate image file
         id: out
         run: |
-          set -euxo pipefail
-          OUT="$(readlink -f result)"
-          if [ -d "$OUT" ]; then
-            IMG="$(find "$OUT" -maxdepth 1 -type f -name '*.qcow2*' -print -quit || true)"
-          else
-            IMG="$OUT"
-          fi
-          test -n "${IMG:-}" -a -f "$IMG"
+          IMG=$(find result -maxdepth 1 -type f -name '*.qcow2*' | head -1)
           echo "image_path=$IMG" >> "$GITHUB_OUTPUT"
 
       - name: Upload image artifact
