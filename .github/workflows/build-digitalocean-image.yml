@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euxo pipefail
           nix --version
-          nix build -L --accept-flake-config ".#nixosConfigurations.${HOST}.config.system.build.digitalOceanImage"
+          nix build -L --accept-flake-config ".#nixosConfigurations.${HOST}.config.system.build.do-image"
           echo "Build output:"
           ls -lah result
 
