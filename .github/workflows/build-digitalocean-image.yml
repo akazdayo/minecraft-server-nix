@@ -60,7 +60,7 @@ jobs:
       - name: Upload image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nixos-digitalocean-${{ inputs.host || 'do' }}-${{ github.run_number }}
+          name: nixos-digitalocean-${{ inputs.host || 'do' }}
           path: ${{ steps.out.outputs.image_path }}
           if-no-files-found: error
           retention-days: 14
@@ -79,7 +79,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: nixos-digitalocean-${{ inputs.host || 'do' }}-${{ github.run_number }}
+          name: nixos-digitalocean-${{ inputs.host || 'do' }}
           path: dist
 
       - name: Upload to GitHub Release

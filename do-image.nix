@@ -1,4 +1,9 @@
-{...}: {
+{
+  config,
+  lib,
+  ...
+}:
+{
   nix.settings.experimental-features = "nix-command flakes";
   swapDevices = [
     {
@@ -6,4 +11,7 @@
       size = 3 * 1024;
     }
   ];
+
+  # DigitalOceanイメージの名前を固定にする
+  image.baseName = lib.mkForce "nixos-digitalocean-do";
 }
