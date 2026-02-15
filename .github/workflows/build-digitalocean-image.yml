@@ -15,17 +15,66 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  flake-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      has_changes: ${{ steps.check_changes.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+
+      - name: Enable Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
+      - name: Update flake.lock
+        run: nix flake update
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet flake.lock; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No changes in flake.lock"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Changes detected in flake.lock"
+          fi
+
+      - name: Upload updated flake.lock
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake-lock
+          path: flake.lock
+          if-no-files-found: error
+          retention-days: 1
+
   build:
     runs-on: ubuntu-latest
+    needs: flake-update
+    if: needs.flake-update.outputs.has_changes == 'true'
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - name: Download updated flake.lock
+        uses: actions/download-artifact@v4
+        with:
+          name: flake-lock
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21
@@ -53,9 +102,35 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  release:
+  commit:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download updated flake.lock
+        uses: actions/download-artifact@v4
+        with:
+          name: flake-lock
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push changes
+        run: |
+          git add flake.lock
+          git commit -m "chore: update flake.lock"
+          git push
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build, commit]
     permissions:
       contents: write
     steps:
