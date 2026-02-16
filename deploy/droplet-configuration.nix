@@ -6,7 +6,7 @@
   ];
 
   # Networking
-  networking.hostName = "minecraft-server";
+  networking.hostName = "digitalocean-nix-tf";
   networking.firewall.allowedTCPPorts = [22];
 
   # SSH

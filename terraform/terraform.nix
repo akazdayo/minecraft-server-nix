@@ -15,15 +15,15 @@
 
   # NixOS カスタムイメージ
   resource.digitalocean_custom_image.nixos = {
-    name = "nixos-minecraft";
-    url = "https://github.com/akazdayo/minecraft-server-nix/releases/download/latest/nixos-digitalocean-do.qcow2.gz";
+    name = "digitalocean-nix-tf";
+    url = "https://github.com/akazdayo/digitalocean-nix-tf/releases/download/latest/nixos-digitalocean-do.qcow2.gz";
     regions = ["sgp1"];
   };
 
   # Droplet
-  resource.digitalocean_droplet.minecraft = {
+  resource.digitalocean_droplet.digitalocean-nix-tf = {
     image = "\${digitalocean_custom_image.nixos.id}";
-    name = "minecraft-server";
+    name = "digitalocean-nix-tf";
     region = "sgp1";
     size = "s-1vcpu-1gb";
     ssh_keys = ["\${data.digitalocean_ssh_key.default.id}"];
@@ -31,7 +31,7 @@
 
   # Outputs
   output.droplet_ip = {
-    value = "\${digitalocean_droplet.minecraft.ipv4_address}";
+    value = "\${digitalocean_droplet.digitalocean-nix-tf.ipv4_address}";
     description = "The public IPv4 address of the Droplet";
   };
 }

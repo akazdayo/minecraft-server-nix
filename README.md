@@ -1,4 +1,4 @@
-# Minecraft Server on DigitalOcean with NixOS
+# NixOS on DigitalOcean with Terraform
 
 Terranix + deploy-rs で NixOS Droplet をデプロイ
 
@@ -40,10 +40,12 @@ deploy
 
 | ファイル | 説明 |
 |---------|------|
-| `terraform.nix` | Terranix設定 (Droplet作成) |
-| `droplet-configuration.nix` | NixOS設定 |
-| `flake.nix` | Flake (deploy-rs設定) |
-| `do-image.nix` | DigitalOceanイメージビルド |
+| `flake.nix` | メインFlake定義 (NixOS + Terranix + deploy-rs) |
+| `terraform/terraform.nix` | Terranix設定 (DigitalOcean Droplet作成) |
+| `terraform/do-image.nix` | DigitalOceanイメージビルド設定 |
+| `deploy/nixos-configurations.nix` | NixOS設定ビルダー |
+| `deploy/droplet-configuration.nix` | Dropletシステム設定 |
+| `deploy/deployment.nix` | deploy-rs設定 |
 
 ## 削除
 
